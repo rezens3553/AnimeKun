@@ -153,9 +153,6 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Укажите юзернейм вашего бота БЕЗ знака @
-        const BOT_USERNAME = "AnimeKunn_bot"; 
-
         let selectedAnime = null;
 
         // Запасной список аниме на случай сбоев API
@@ -169,9 +166,7 @@
         ];
 
         async function loadAnime() {
-            const container = document.getElementById("anime-list");
             try {
-                // Запрос через CORS-прокси
                 const proxyUrl = "https://api.allorigins.win/raw?url=";
                 const targetUrl = encodeURIComponent("https://shikimori.one/api/animes?limit=20&order=popularity");
                 const response = await fetch(proxyUrl + targetUrl);
@@ -225,8 +220,14 @@
 
         function watchAnime() {
             if (!selectedAnime) return;
-            tg.openTelegramLink(`https://t.me/${BOT_USERNAME}?start=watch_${selectedAnime.id}`);
-            tg.close();
+            
+            // Прямая передача данных в бота через Telegram WebApp API
+            tg.sendData(JSON.stringify({
+                title: selectedAnime.name,
+                episodes: selectedAnime.episodes,
+                cover: selectedAnime.poster,
+                rating: selectedAnime.score
+            }));
         }
 
         loadAnime();
