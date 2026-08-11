@@ -3,85 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AnimeKun Native Player</title>
+    <title>AnimeKun Telegram Player</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #0f0f0f;
-            color: #fff;
-            margin: 0;
-            padding: 15px;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            align-items: center;
         }
-        .container { width: 100%; max-width: 800px; }
-        h2 { font-size: 16px; margin-bottom: 4px; }
-        .info { color: #888; font-size: 13px; margin-bottom: 12px; }
-        
-        /* Контейнер нативного плеера */
-        .player-box {
+        .player-container {
+            flex-grow: 1;
             width: 100%;
-            background: #000;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            height: calc(100vh - 50px);
         }
-        video {
+        iframe {
             width: 100%;
-            max-height: 70vh;
-            display: block;
-            outline: none;
+            height: 100%;
+            border: none;
         }
         .close-btn {
-            margin-top: 15px;
+            height: 50px;
             width: 100%;
             background-color: #ff5252;
             color: white;
             border: none;
-            padding: 12px;
-            font-size: 15px;
-            border-radius: 8px;
-            cursor: pointer;
+            font-size: 16px;
             font-weight: bold;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2 id="anime-title">Загрузка...</h2>
-        <div class="info" id="anime-info">Серия: -, Озвучка: -</div>
-        
-        <div class="player-box">
-            <!-- Тот самый чистый нативный плеер браузера -->
-            <video id="native-video" controls playsinline>
-                Ваш браузер не поддерживает видео.
-            </video>
-        </div>
-
-        <button class="close-btn" onclick="Telegram.WebApp.close()">Закрыть плеер</button>
+    <div class="player-container">
+        <iframe id="video-frame" src="" allowfullscreen allow="autoplay *; fullscreen *; encrypted-media *"></iframe>
     </div>
+
+    <button class="close-btn" onclick="Telegram.WebApp.close()">Закрыть плеер</button>
 
     <script>
         Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
+        Telegram.WebApp.expand(); // Разворачивает Mini App на весь экран телефона
 
+        // Считываем параметры, которые передал бот
         const urlParams = new URLSearchParams(window.location.search);
-        const title = urlParams.get('title') || 'Аниме';
+        const title = urlParams.get('title') || '';
         const episode = urlParams.get('ep') || '1';
-        const voice = urlParams.get('voice') || 'Anilibria';
+        const voice = urlParams.get('voice') || '';
 
-        document.getElementById('anime-title').innerText = title;
-        document.getElementById('anime-info').innerText = `Серия: ${episode} | Озвучка: ${voice}`;
-
-        const videoElement = document.getElementById('native-video');
-
-        // ТЕСТОВЫЙ ПРИМЕР: 
-        // Сюда можно вставить прямую ссылку на .mp4 файл для проверки, 
-        // как круто и без рекламы работает этот плеер.
-        videoElement.src = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+        const iframe = document.getElementById('video-frame');
+        
+        // Ссылка на базу Kodik, которая сама найдет аниме, нужную серию и озвучку прямо внутри Telegram
+        if (title) {
+            iframe.src = `https://kodik.cc/search?title=${encodeURIComponent(title)}&episode=${episode}&translation_type=${encodeURIComponent(voice)}`;
+        } else {
+            document.body.innerHTML = "<h3 style='color:white; text-align:center; padding-top:50px;'>Ошибка: аниме не выбрано</h3>";
+        }
     </script>
 </body>
 </html>
