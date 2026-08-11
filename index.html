@@ -137,7 +137,7 @@
 <body>
 
     <h1>🎬 Каталог Аниме</h1>
-    <div class="grid" id="anime-list"></div>
+    <div class="grid" id="anime-list">Загрузка каталога...</div>
 
     <!-- Модальное окно -->
     <div class="modal-overlay" id="modal">
@@ -153,45 +153,69 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // УКАЖИТЕ ЮЗЕРНЕЙМ ВАШЕГО БОТА БЕЗ ЗНАКА @
-        const BOT_USERNAME = "AnimeKunn_bot"; 
+        // Укажите юзернейм вашего бота БЕЗ знака @
+        const BOT_USERNAME = "ИМЯ_ВАШЕГО_БОТА"; 
 
         let selectedAnime = null;
 
+        // Запасной список аниме на случай сбоев API
+        const FALLBACK_ANIME = [
+            { id: 1, name: "Атака титанов", score: "9.0", episodes: 25, poster: "https://moe.shikimori.one/uploads/poster/animes/16498/main_2x.webp" },
+            { id: 5114, name: "Стальной алхимик: Братство", score: "9.1", episodes: 64, poster: "https://moe.shikimori.one/uploads/poster/animes/5114/main_2x.webp" },
+            { id: 9253, name: "Врата Штейна", score: "9.0", episodes: 24, poster: "https://moe.shikimori.one/uploads/poster/animes/9253/main_2x.webp" },
+            { id: 38000, name: "Клинок, рассекающий демонов", score: "8.5", episodes: 26, poster: "https://moe.shikimori.one/uploads/poster/animes/38000/main_2x.webp" },
+            { id: 40748, name: "Магическая битва", score: "8.6", episodes: 24, poster: "https://moe.shikimori.one/uploads/poster/animes/40748/main_2x.webp" },
+            { id: 1535, name: "Тетрадь смерти", score: "8.6", episodes: 37, poster: "https://moe.shikimori.one/uploads/poster/animes/1535/main_2x.webp" }
+        ];
+
         async function loadAnime() {
+            const container = document.getElementById("anime-list");
             try {
-                const response = await fetch("https://shikimori.one/api/animes?limit=20&order=popularity");
-                const data = await response.json();
+                // Запрос через CORS-прокси
+                const proxyUrl = "https://api.allorigins.win/raw?url=";
+                const targetUrl = encodeURIComponent("https://shikimori.one/api/animes?limit=20&order=popularity");
+                const response = await fetch(proxyUrl + targetUrl);
                 
-                const container = document.getElementById("anime-list");
-                container.innerHTML = "";
+                if (!response.ok) throw new Error("API error");
+                const data = await response.json();
 
-                data.forEach(anime => {
-                    const card = document.createElement("div");
-                    card.className = "card";
-                    card.onclick = () => openModal(anime);
-
-                    const title = anime.russian || anime.name;
-                    const poster = "https://shikimori.one" + anime.image.original;
-
-                    card.innerHTML = `
-                        <img src="${poster}" alt="${title}">
-                        <div class="card-info">
-                            <div class="card-title">${title}</div>
-                            <div class="card-score">⭐ ${anime.score}</div>
-                        </div>
-                    `;
-                    container.appendChild(card);
-                });
+                renderAnime(data.map(item => ({
+                    id: item.id,
+                    name: item.russian || item.name,
+                    score: item.score,
+                    episodes: item.episodes || item.episodes_aired || 12,
+                    poster: "https://shikimori.one" + item.image.original
+                })));
             } catch (e) {
-                console.error("Ошибка загрузки данных:", e);
+                console.warn("Сбой загрузки API, используем резервный каталог:", e);
+                renderAnime(FALLBACK_ANIME);
             }
+        }
+
+        function renderAnime(list) {
+            const container = document.getElementById("anime-list");
+            container.innerHTML = "";
+
+            list.forEach(anime => {
+                const card = document.createElement("div");
+                card.className = "card";
+                card.onclick = () => openModal(anime);
+
+                card.innerHTML = `
+                    <img src="${anime.poster}" alt="${anime.name}" onerror="this.src='https://via.placeholder.com/150x210?text=No+Cover'">
+                    <div class="card-info">
+                        <div class="card-title">${anime.name}</div>
+                        <div class="card-score">⭐ ${anime.score}</div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
         }
 
         function openModal(anime) {
             selectedAnime = anime;
-            document.getElementById("modal-title").innerText = anime.russian || anime.name;
-            document.getElementById("modal-details").innerText = `Эпизоды: ${anime.episodes || anime.episodes_aired || 12} | Рейтинг: ⭐ ${anime.score}`;
+            document.getElementById("modal-title").innerText = anime.name;
+            document.getElementById("modal-details").innerText = `Эпизоды: ${anime.episodes} | Рейтинг: ⭐ ${anime.score}`;
             document.getElementById("modal").style.display = "flex";
         }
 
@@ -201,7 +225,6 @@
 
         function watchAnime() {
             if (!selectedAnime) return;
-            // Переход в чат бота с передачей ID аниме
             tg.openTelegramLink(`https://t.me/${BOT_USERNAME}?start=watch_${selectedAnime.id}`);
             tg.close();
         }
