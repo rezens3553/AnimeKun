@@ -66,7 +66,7 @@
 </head>
 <body>
 
-    <input type="text" class="search-box" id="searchInput" placeholder="Поиск аниме (на английском)..." oninput="debounceSearch()">
+    <input type="text" class="search-box" id="searchInput" placeholder="Поиск аниме на русском..." oninput="debounceSearch()">
     <div class="section-title" id="heading">🔥 Популярные аниме</div>
     <div class="grid" id="animeGrid">
         <div class="loading">Загрузка каталога...</div>
@@ -76,6 +76,8 @@
         window.Telegram.WebApp.ready();
         window.Telegram.WebApp.expand();
 
+        const API_BASE = "https://shikimori.one";
+        const PROXY = "https://corsproxy.io/?";
         let searchTimeout;
 
         function debounceSearch() {
@@ -83,15 +85,27 @@
             searchTimeout = setTimeout(searchAnime, 500);
         }
 
+        async function fetchData(endpoint) {
+            const targetUrl = API_BASE + endpoint;
+            try {
+                // Попытка загрузить через прокси
+                const response = await fetch(PROXY + encodeURIComponent(targetUrl));
+                if (response.ok) return await response.json();
+            } catch (e) {
+                console.warn("Proxy failed, trying direct...");
+            }
+            // Запасная попытка напрямую
+            const directResponse = await fetch(targetUrl);
+            return await directResponse.json();
+        }
+
         async function loadPopularAnime() {
             try {
-                const response = await fetch("https://api.jikan.moe/v4/top/anime?limit=12");
-                if (!response.ok) throw new Error("Network response was not ok");
-                const result = await response.json();
-                renderAnime(result.data);
+                const data = await fetchData('/api/animes?limit=12&order=popularity');
+                renderAnime(data);
             } catch (e) {
                 console.error(e);
-                document.getElementById('animeGrid').innerHTML = '<div class="loading">Ошибка загрузки. Перезапустите приложение.</div>';
+                document.getElementById('animeGrid').innerHTML = '<div class="loading">Ошибка загрузки. Обновите страницу.</div>';
             }
         }
 
@@ -107,10 +121,8 @@
             
             heading.innerText = `🔍 Поиск: ${query}`;
             try {
-                const response = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=12`);
-                if (!response.ok) throw new Error("Network response was not ok");
-                const result = await response.json();
-                renderAnime(result.data);
+                const data = await fetchData(`/api/animes?search=${encodeURIComponent(query)}&limit=12`);
+                renderAnime(data);
             } catch (e) {
                 console.error(e);
             }
@@ -128,8 +140,8 @@
             list.forEach(anime => {
                 const card = document.createElement('div');
                 card.className = 'card';
-                const poster = anime.images?.jpg?.image_url || '';
-                const title = anime.title;
+                const poster = anime.image ? (API_BASE + anime.image.original) : '';
+                const title = anime.russian || anime.name;
                 
                 card.innerHTML = `
                     <img src="${poster}" alt="${title}">
