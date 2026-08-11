@@ -3,234 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AnimeKun</title>
+    <title>AnimeKun Каталог</title>
+    <!-- Подключаем официальный скрипт Telegram WebApp -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
         body {
-            background-color: #121214;
-            color: #ffffff;
-            padding: 16px;
-            padding-bottom: 90px;
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #fff;
+            margin: 0;
+            padding: 15px;
         }
-
         h1 {
-            font-size: 22px;
-            margin-bottom: 16px;
             text-align: center;
-            color: #0088cc;
+            font-size: 20px;
+            margin-bottom: 20px;
         }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-
-        .card {
-            background-color: #1e1e22;
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            cursor: pointer;
-            border: 1px solid #2a2a30;
-            transition: transform 0.2s;
-        }
-
-        .card:active {
-            transform: scale(0.97);
-        }
-
-        .card img {
-            width: 100%;
-            height: 210px;
-            object-fit: cover;
-        }
-
-        .card-info {
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .card-title {
-            font-size: 14px;
-            font-weight: bold;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .card-score {
-            font-size: 12px;
-            color: #ffca28;
-        }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            display: none;
-            justify-content: center;
-            align-items: flex-end;
-            z-index: 100;
-        }
-
-        .modal-content {
-            background-color: #1e1e22;
-            width: 100%;
-            max-height: 85vh;
-            border-radius: 20px 20px 0 0;
-            padding: 20px;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        .modal-title {
-            font-size: 18px;
-            margin-bottom: 8px;
-        }
-
-        .modal-details {
-            font-size: 14px;
-            color: #aaaaaa;
-            margin-bottom: 16px;
-        }
-
-        .watch-btn {
-            width: 100%;
-            background-color: #0088cc;
-            color: white;
-            border: none;
-            padding: 14px;
+        .anime-card {
+            background: #1e1e1e;
+            padding: 15px;
             border-radius: 10px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            border: 1px solid #333;
+            transition: 0.2s;
+        }
+        .anime-card:hover {
+            border-color: #555;
+        }
+        .anime-title {
             font-size: 16px;
             font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
+            margin-bottom: 5px;
         }
-
-        .close-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: none;
-            border: none;
-            color: #888;
-            font-size: 24px;
-            cursor: pointer;
+        .anime-info {
+            font-size: 13px;
+            color: #aaa;
         }
     </style>
 </head>
 <body>
 
-    <h1>🎬 Каталог Аниме</h1>
-    <div class="grid" id="anime-list">Загрузка каталога...</div>
+    <h1>Выберете аниме</h1>
 
-    <!-- Модальное окно -->
-    <div class="modal-overlay" id="modal">
-        <div class="modal-content">
-            <button class="close-btn" onclick="closeModal()">&times;</button>
-            <h2 class="modal-title" id="modal-title"></h2>
-            <div class="modal-details" id="modal-details"></div>
-            <button class="watch-btn" onclick="watchAnime()">СМОТРЕТЬ АНИМЕ</button>
-        </div>
+    <!-- Список твоих аниме-карточек (можешь добавлять свои по аналогии) -->
+    <div class="anime-card" onclick="selectAnime('Стальной алхимик: Братство', 64, '9.1', 'https://via.placeholder.com/300x450')">
+        <div class="anime-title">🎬 Стальной алхимик: Братство</div>
+        <div class="anime-info">Серий: 64 | Рейтинг: 9.1</div>
+    </div>
+
+    <div class="anime-card" onclick="selectAnime('Клинок, рассекающий демонов', 26, '8.7', 'https://via.placeholder.com/300x450')">
+        <div class="anime-title">🎬 Клинок, рассекающий демонов</div>
+        <div class="anime-info">Серий: 26 | Рейтинг: 8.7</div>
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+        // Инициализация WebApp
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
 
-        let selectedAnime = null;
+        function selectAnime(title, episodes, rating, cover) {
+            // Формируем объект с данными, который ждет твой бот в main.py
+            const animeData = {
+                title: title,
+                episodes: episodes,
+                rating: rating,
+                cover: cover
+            };
 
-        // Запасной список аниме на случай сбоев API
-        const FALLBACK_ANIME = [
-            { id: 1, name: "Атака титанов", score: "9.0", episodes: 25, poster: "https://moe.shikimori.one/uploads/poster/animes/16498/main_2x.webp" },
-            { id: 5114, name: "Стальной алхимик: Братство", score: "9.1", episodes: 64, poster: "https://moe.shikimori.one/uploads/poster/animes/5114/main_2x.webp" },
-            { id: 9253, name: "Врата Штейна", score: "9.0", episodes: 24, poster: "https://moe.shikimori.one/uploads/poster/animes/9253/main_2x.webp" },
-            { id: 38000, name: "Клинок, рассекающий демонов", score: "8.5", episodes: 26, poster: "https://moe.shikimori.one/uploads/poster/animes/38000/main_2x.webp" },
-            { id: 40748, name: "Магическая битва", score: "8.6", episodes: 24, poster: "https://moe.shikimori.one/uploads/poster/animes/40748/main_2x.webp" },
-            { id: 1535, name: "Тетрадь смерти", score: "8.6", episodes: 37, poster: "https://moe.shikimori.one/uploads/poster/animes/1535/main_2x.webp" }
-        ];
-
-        async function loadAnime() {
-            try {
-                const proxyUrl = "https://api.allorigins.win/raw?url=";
-                const targetUrl = encodeURIComponent("https://shikimori.one/api/animes?limit=20&order=popularity");
-                const response = await fetch(proxyUrl + targetUrl);
-                
-                if (!response.ok) throw new Error("API error");
-                const data = await response.json();
-
-                renderAnime(data.map(item => ({
-                    id: item.id,
-                    name: item.russian || item.name,
-                    score: item.score,
-                    episodes: item.episodes || item.episodes_aired || 12,
-                    poster: "https://shikimori.one" + item.image.original
-                })));
-            } catch (e) {
-                console.warn("Сбой загрузки API, используем резервный каталог:", e);
-                renderAnime(FALLBACK_ANIME);
-            }
-        }
-
-        function renderAnime(list) {
-            const container = document.getElementById("anime-list");
-            container.innerHTML = "";
-
-            list.forEach(anime => {
-                const card = document.createElement("div");
-                card.className = "card";
-                card.onclick = () => openModal(anime);
-
-                card.innerHTML = `
-                    <img src="${anime.poster}" alt="${anime.name}" onerror="this.src='https://via.placeholder.com/150x210?text=No+Cover'">
-                    <div class="card-info">
-                        <div class="card-title">${anime.name}</div>
-                        <div class="card-score">⭐ ${anime.score}</div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function openModal(anime) {
-            selectedAnime = anime;
-            document.getElementById("modal-title").innerText = anime.name;
-            document.getElementById("modal-details").innerText = `Эпизоды: ${anime.episodes} | Рейтинг: ⭐ ${anime.score}`;
-            document.getElementById("modal").style.display = "flex";
-        }
-
-        function closeModal() {
-            document.getElementById("modal").style.display = "none";
-        }
-
-        function watchAnime() {
-            if (!selectedAnime) return;
+            // Отправляем данные боту в формате JSON строки
+            Telegram.WebApp.sendData(JSON.stringify(animeData));
             
-            // Прямая передача данных в бота через Telegram WebApp API
-            tg.sendData(JSON.stringify({
-                title: selectedAnime.name,
-                episodes: selectedAnime.episodes,
-                cover: selectedAnime.poster,
-                rating: selectedAnime.score
-            }));
+            // Закрываем Mini App, чтобы вернуть пользователя в чат с ботом
+            Telegram.WebApp.close();
         }
-
-        loadAnime();
     </script>
+
 </body>
 </html>
