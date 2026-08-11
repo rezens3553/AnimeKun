@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnimeKun Player</title>
+    <!-- Подключаем Telegram WebApp скрипт -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+        h2 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        .info {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .player-box {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* Соотношение сторон 16:9 */
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .close-btn {
+            margin-top: 20px;
+            width: 100%;
+            background-color: #ff5252;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2 id="anime-title">Загрузка аниме...</h2>
+        <div class="info" id="anime-info">Серия: -, Озвучка: -</div>
+        
+        <!-- Оконный блок плеера -->
+        <div class="player-box">
+            <!-- Здесь можно подключить embed-плеер (например, Kodik или аналогичный iframe) -->
+            <iframe id="video-frame" src="" allowfullscreen></iframe>
+        </div>
+
+        <button class="button close-btn" onclick="Telegram.WebApp.close()">Закрыть плеер</button>
+    </div>
+
+    <script>
+        // Инициализация Telegram WebApp
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand(); // Разворачиваем на весь экран
+
+        // Читаем параметры, которые передал бот в ссылке
+        const urlParams = new URLSearchParams(window.location.search);
+        const title = urlParams.get('title') || 'Аниме';
+        const episode = urlParams.get('ep') || '1';
+        const voice = urlParams.get('voice') || 'Anilibria';
+
+        // Выводим текст в шапку плеера
+        document.getElementById('anime-title').innerText = title;
+        document.getElementById('anime-info').innerText = `Серия: ${episode} | Озвучка: ${voice}`;
+
+        // Ссылка на источник видео (в качестве примера подставляем поиск/фрейм плеера, 
+        // сюда можно прописать интеграцию с вашим проигрывателем или API)
+        const iframe = document.getElementById('video-frame');
+        
+        // Пример: если у вас есть база, здесь генерируется ссылка на видео. 
+        // Пока что для примера ставим заглушку-поиск или плеер-парсер:
+        iframe.src = `https://v2.vidsrc.me/embed/${encodeURIComponent(title)}`;
+    </script>
+</body>
+</html>
