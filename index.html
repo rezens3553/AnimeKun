@@ -12,6 +12,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0;
             padding: 15px;
+            padding-bottom: 30px;
         }
         .search-box {
             width: 100%;
@@ -22,13 +23,38 @@
             color: #fff;
             box-sizing: border-box;
             font-size: 15px;
-            margin-bottom: 20px;
             outline: none;
         }
-        .section-title {
-            font-size: 18px;
-            font-weight: bold;
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        .tab-btn {
+            background: #1e1e1e;
+            color: #888;
+            border: 1px solid #333;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .tab-btn.active {
+            background: #ff4757;
+            color: #fff;
+            border-color: #ff4757;
+        }
+        .genre-select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            background: #1e1e1e;
+            color: #fff;
+            border: 1px solid #333;
             margin-bottom: 15px;
+            display: none;
         }
         .grid {
             display: grid;
@@ -41,10 +67,11 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            cursor: pointer;
         }
         .card img {
             width: 100%;
-            height: 230px;
+            height: 220px;
             object-fit: cover;
         }
         .card-title {
@@ -56,84 +83,189 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        .load-more {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background: #2f3542;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
         .loading {
             text-align: center;
             color: #888;
             grid-column: span 2;
-            padding: 40px 0;
+            padding: 30px 0;
+        }
+        /* Модальное окно детализации */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #121212;
+            z-index: 100;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .close-btn {
+            background: #2f3542;
+            border: none;
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .modal-poster {
+            width: 100%;
+            max-height: 350px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+        .watch-btn {
+            width: 100%;
+            padding: 16px;
+            background: #ff4757;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 15px 0;
+            cursor: pointer;
+        }
+        .info-row {
+            margin: 8px 0;
+            color: #ccc;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
 
-    <input type="text" class="search-box" id="searchInput" placeholder="Поиск аниме на русском..." oninput="debounceSearch()">
-    <div class="section-title" id="heading">🔥 Популярные аниме</div>
-    <div class="grid" id="animeGrid">
-        <div class="loading">Загрузка каталога...</div>
+    <input type="text" class="search-box" id="searchInput" placeholder="Поиск аниме..." oninput="debounceSearch()">
+
+    <div class="tabs">
+        <button class="tab-btn active" id="tab-popular" onclick="switchTab('popular')">🔥 Популярные</button>
+        <button class="tab-btn" id="tab-ongoing" onclick="switchTab('ongoing')">📺 Онгоинги</button>
+        <button class="tab-btn" id="tab-genre" onclick="switchTab('genre')">🎭 По жанрам</button>
+    </div>
+
+    <select class="genre-select" id="genreSelect" onchange="loadGenreAnime()">
+        <option value="1">Экшен</option>
+        <option value="2">Приключения</option>
+        <option value="4">Комедия</option>
+        <option value="8">Драма</option>
+        <option value="10">Фэнтези</option>
+        <option value="22">Романтика</option>
+    </select>
+
+    <div class="grid" id="animeGrid"></div>
+    <button class="load-more" id="loadMoreBtn" onclick="loadMore()">Загрузить еще</button>
+
+    <!-- Модальное окно детализации -->
+    <div class="modal" id="animeModal">
+        <div class="modal-header">
+            <h3 id="mTitle" style="margin:0;">Название</h3>
+            <button class="close-btn" onclick="closeModal()">✕ Закрыть</button>
+        </div>
+        <img src="" id="mPoster" class="modal-poster">
+        <button class="watch-btn" onclick="watchAnime()">🎬 СМОТРЕТЬ АНИМЕ</button>
+
+        <div class="info-row">⭐ <b>Рейтинг:</b> <span id="mRating">-</span></div>
+        <div class="info-row">📺 <b>Эпизоды:</b> <span id="mEpisodes">-</span></div>
+        <div class="info-row">🏷️ <b>Жанры:</b> <span id="mGenres">-</span></div>
+        <div class="info-row" style="margin-top:15px;" id="mDescription"></div>
     </div>
 
     <script>
-        window.Telegram.WebApp.ready();
-        window.Telegram.WebApp.expand();
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
 
         const API_BASE = "https://shikimori.one";
         const PROXY = "https://corsproxy.io/?";
-        let searchTimeout;
 
-        function debounceSearch() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(searchAnime, 500);
-        }
+        let currentTab = 'popular';
+        let currentPage = 1;
+        let selectedAnime = null;
+        let searchTimeout;
 
         async function fetchData(endpoint) {
             const targetUrl = API_BASE + endpoint;
             try {
-                // Попытка загрузить через прокси
-                const response = await fetch(PROXY + encodeURIComponent(targetUrl));
-                if (response.ok) return await response.json();
-            } catch (e) {
-                console.warn("Proxy failed, trying direct...");
-            }
-            // Запасная попытка напрямую
-            const directResponse = await fetch(targetUrl);
-            return await directResponse.json();
+                const res = await fetch(PROXY + encodeURIComponent(targetUrl));
+                if (res.ok) return await res.json();
+            } catch (e) {}
+            const res = await fetch(targetUrl);
+            return await res.json();
         }
 
-        async function loadPopularAnime() {
-            try {
-                const data = await fetchData('/api/animes?limit=12&order=popularity');
-                renderAnime(data);
-            } catch (e) {
-                console.error(e);
-                document.getElementById('animeGrid').innerHTML = '<div class="loading">Ошибка загрузки. Обновите страницу.</div>';
-            }
-        }
-
-        async function searchAnime() {
-            const query = document.getElementById('searchInput').value.trim();
-            const heading = document.getElementById('heading');
+        function switchTab(tab) {
+            currentTab = tab;
+            currentPage = 1;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
             
-            if (!query) {
-                heading.innerText = "🔥 Популярные аниме";
-                loadPopularAnime();
-                return;
-            }
-            
-            heading.innerText = `🔍 Поиск: ${query}`;
-            try {
-                const data = await fetchData(`/api/animes?search=${encodeURIComponent(query)}&limit=12`);
-                renderAnime(data);
-            } catch (e) {
-                console.error(e);
+            const gSelect = document.getElementById('genreSelect');
+            if (tab === 'genre') {
+                gSelect.style.display = 'block';
+                loadGenreAnime();
+            } else {
+                gSelect.style.display = 'none';
+                loadCatalog(true);
             }
         }
 
-        function renderAnime(list) {
+        async function loadCatalog(reset = false) {
+            if (reset) {
+                currentPage = 1;
+                document.getElementById('animeGrid').innerHTML = '<div class="loading">Загрузка...</div>';
+            }
+
+            let endpoint = `/api/animes?limit=12&page=${currentPage}`;
+            if (currentTab === 'popular') endpoint += '&order=popularity';
+            if (currentTab === 'ongoing') endpoint += '&status=ongoing&order=popularity';
+
+            const data = await fetchData(endpoint);
+            renderGrid(data, reset);
+        }
+
+        async function loadGenreAnime(reset = true) {
+            if (reset) {
+                currentPage = 1;
+                document.getElementById('animeGrid').innerHTML = '<div class="loading">Загрузка...</div>';
+            }
+            const genreId = document.getElementById('genreSelect').value;
+            const data = await fetchData(`/api/animes?genre=${genreId}&limit=12&page=${currentPage}&order=popularity`);
+            renderGrid(data, reset);
+        }
+
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(async () => {
+                const q = document.getElementById('searchInput').value.trim();
+                if (!q) { loadCatalog(true); return; }
+                document.getElementById('animeGrid').innerHTML = '<div class="loading">Поиск...</div>';
+                const data = await fetchData(`/api/animes?search=${encodeURIComponent(q)}&limit=12`);
+                renderGrid(data, true);
+            }, 500);
+        }
+
+        function renderGrid(list, reset) {
             const grid = document.getElementById('animeGrid');
-            grid.innerHTML = '';
-            
+            if (reset) grid.innerHTML = '';
+
             if (!list || list.length === 0) {
-                grid.innerHTML = '<div class="loading">Ничего не найдено</div>';
+                if (reset) grid.innerHTML = '<div class="loading">Ничего не найдено</div>';
                 return;
             }
 
@@ -142,7 +274,8 @@
                 card.className = 'card';
                 const poster = anime.image ? (API_BASE + anime.image.original) : '';
                 const title = anime.russian || anime.name;
-                
+
+                card.onclick = () => openDetails(anime.id);
                 card.innerHTML = `
                     <img src="${poster}" alt="${title}">
                     <div class="card-title">${title}</div>
@@ -151,7 +284,44 @@
             });
         }
 
-        loadPopularAnime();
+        function loadMore() {
+            currentPage++;
+            if (currentTab === 'genre') loadGenreAnime(false);
+            else loadCatalog(false);
+        }
+
+        async function openDetails(id) {
+            const anime = await fetchData(`/api/animes/${id}`);
+            selectedAnime = {
+                id: anime.id,
+                title: anime.russian || anime.name,
+                episodes: anime.episodes || anime.episodes_aired || 12,
+                cover: anime.image ? (API_BASE + anime.image.original) : '',
+                rating: anime.score || '8.0'
+            };
+
+            document.getElementById('mTitle').innerText = selectedAnime.title;
+            document.getElementById('mPoster').src = selectedAnime.cover;
+            document.getElementById('mRating').innerText = selectedAnime.rating;
+            document.getElementById('mEpisodes').innerText = selectedAnime.episodes;
+            document.getElementById('mGenres').innerText = (anime.genres || []).map(g => g.russian).join(', ') || 'Аниме';
+            document.getElementById('mDescription').innerText = anime.description || 'Описание отсутствует.';
+
+            document.getElementById('animeModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('animeModal').style.display = 'none';
+        }
+
+        function watchAnime() {
+            if (!selectedAnime) return;
+            // Отправляем данные боту и закрываем WebApp
+            tg.sendData(JSON.stringify(selectedAnime));
+            tg.close();
+        }
+
+        loadCatalog();
     </script>
 </body>
 </html>
