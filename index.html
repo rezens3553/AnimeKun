@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AnimeKun Каталог</title>
-    <!-- Подключаем скрипт Telegram Mini App -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { background: #0f0f0f; color: #fff; font-family: Arial, sans-serif; padding: 15px; margin: 0; }
@@ -16,25 +15,20 @@
 </head>
 <body>
 
-    <!-- ЭКРАН 1: Список каталога манги -->
+    <!-- Каталог манги -->
     <div id="catalog">
         <h2>📚 Каталог манги</h2>
-        
-        <!-- Карточка первой манги -->
         <div class="card" onclick="openManga('berserk', 'Берсерк', 'Оценка: 9.8 | Глав: 364\n\nИстория о черном мечнике Гатсе, борющемся со своей судьбой в мрачном фэнтезийном мире.')">
             <h3>Берсерк</h3>
             <p style="color: #aaa; font-size: 14px; margin: 0;">⭐ 9.8 | Глав: 364</p>
         </div>
-
-        <!-- Можешь добавлять сюда еще карточки по аналогии -->
     </div>
 
-    <!-- ЭКРАН 2: Информация о выбранной манге -->
+    <!-- Информация о манге -->
     <div id="manga-info">
         <h2 id="title" style="color: #ff5252;">Название</h2>
         <p id="details" style="line-height: 1.5; color: #ddd; white-space: pre-line;">Информация...</p>
         
-        <!-- Кнопка отправляет данные в бота и закрывает Mini App -->
         <button class="btn" onclick="selectMangaInBot()">Выбрать главу в чате</button>
         <button style="background: transparent; color: #888; border: none; width: 100%; margin-top: 10px; padding: 10px; cursor: pointer;" onclick="goBack()">⬅️ Назад к каталогу</button>
     </div>
@@ -60,9 +54,9 @@
         }
 
         function selectMangaInBot() {
-            // Упаковываем данные и отправляем их обратно в Telegram-бот
-            const data = JSON.stringify({ action: 'choose_chapter', manga: currentMangaSlug });
-            Telegram.WebApp.sendData(data);
+            const botUsername = "MangaKunRead_bot"; 
+            const deepLink = `https://t.me/${botUsername}?start=manga_${currentMangaSlug}`;
+            Telegram.WebApp.openTelegramLink(deepLink);
         }
     </script>
 </body>
