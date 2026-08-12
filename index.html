@@ -3,101 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AnimeKun Manga Reader</title>
+    <title>AnimeKun Каталог</title>
+    <!-- Подключаем скрипт Telegram Mini App -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            margin: 0;
-            background-color: #0f0f0f;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(15, 15, 15, 0.95);
-            padding: 10px;
-            text-align: center;
-            font-size: 14px;
-            color: #aaa;
-            border-bottom: 1px solid #222;
-            z-index: 100;
-        }
-        #reader-container {
-            width: 100%;
-            max-width: 800px;
-            margin-top: 45px; /* отступ под шапку */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        /* Страницы манги идут друг за другом */
-        .manga-page {
-            width: 100%;
-            height: auto;
-            display: block;
-            margin-bottom: 2px;
-        }
-        .loading {
-            padding: 50px;
-            text-align: center;
-            color: #888;
-            font-size: 16px;
-        }
+        body { background: #0f0f0f; color: #fff; font-family: Arial, sans-serif; padding: 15px; margin: 0; }
+        .card { background: #1a1a1a; padding: 15px; border-radius: 10px; margin-bottom: 15px; cursor: pointer; border: 1px solid #333; }
+        .card h3 { margin: 0 0 5px 0; color: #ff5252; }
+        .btn { background: #ff5252; color: #white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; margin-top: 15px; }
+        #manga-info { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="header" id="chapter-title">Загрузка главы...</div>
+    <!-- ЭКРАН 1: Список каталога манги -->
+    <div id="catalog">
+        <h2>📚 Каталог манги</h2>
+        
+        <!-- Карточка первой манги -->
+        <div class="card" onclick="openManga('berserk', 'Берсерк', 'Оценка: 9.8 | Глав: 364\n\nИстория о черном мечнике Гатсе, борющемся со своей судьбой в мрачном фэнтезийном мире.')">
+            <h3>Берсерк</h3>
+            <p style="color: #aaa; font-size: 14px; margin: 0;">⭐ 9.8 | Глав: 364</p>
+        </div>
 
-    <div id="reader-container">
-        <div class="loading" id="status">Загружаем страницы манги...</div>
+        <!-- Можешь добавлять сюда еще карточки по аналогии -->
+    </div>
+
+    <!-- ЭКРАН 2: Информация о выбранной манге -->
+    <div id="manga-info">
+        <h2 id="title" style="color: #ff5252;">Название</h2>
+        <p id="details" style="line-height: 1.5; color: #ddd; white-space: pre-line;">Информация...</p>
+        
+        <!-- Кнопка отправляет данные в бота и закрывает Mini App -->
+        <button class="btn" onclick="selectMangaInBot()">Выбрать главу в чате</button>
+        <button style="background: transparent; color: #888; border: none; width: 100%; margin-top: 10px; padding: 10px; cursor: pointer;" onclick="goBack()">⬅️ Назад к каталогу</button>
     </div>
 
     <script>
         Telegram.WebApp.ready();
         Telegram.WebApp.expand();
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const mangaSlug = urlParams.get('manga') || 'berserk';
-        const chapterNum = urlParams.get('ch') || '1';
+        let currentMangaSlug = '';
 
-        document.getElementById('chapter-title').innerText = `Манга: ${mangaSlug} | Глава ${chapterNum}`;
-
-        const container = document.getElementById('reader-container');
-        const status = document.getElementById('status');
-
-        async function loadManga() {
-            try {
-                // Здесь ты подключаешь API манги (например, MangaLib или свой сервер).
-                // Для примера используем массив тестовых картинок страниц:
-                const pages = [
-                    "https://via.placeholder.com/800x1200/1a1a1a/fff?text=Manga+Page+1",
-                    "https://via.placeholder.com/800x1200/222222/fff?text=Manga+Page+2",
-                    "https://via.placeholder.com/800x1200/2a2a2a/fff?text=Manga+Page+3"
-                ];
-
-                status.remove(); // Убираем плашку загрузки
-
-                pages.forEach(imgUrl => {
-                    const img = document.createElement('img');
-                    img.src = imgUrl;
-                    img.className = 'manga-page';
-                    img.loading = 'lazy'; // Оптимизация: картинки грузятся по мере прокрутки
-                    container.appendChild(img);
-                });
-
-            } catch (err) {
-                status.innerText = "Не удалось загрузить главы.";
-            }
+        function openManga(slug, name, infoText) {
+            currentMangaSlug = slug;
+            document.getElementById('catalog').style.display = 'none';
+            document.getElementById('manga-info').style.display = 'block';
+            
+            document.getElementById('title').innerText = name;
+            document.getElementById('details').innerText = infoText;
         }
 
-        loadManga();
+        function goBack() {
+            document.getElementById('manga-info').style.display = 'none';
+            document.getElementById('catalog').style.display = 'block';
+        }
+
+        function selectMangaInBot() {
+            // Упаковываем данные и отправляем их обратно в Telegram-бот
+            const data = JSON.stringify({ action: 'choose_chapter', manga: currentMangaSlug });
+            Telegram.WebApp.sendData(data);
+        }
     </script>
 </body>
 </html>
