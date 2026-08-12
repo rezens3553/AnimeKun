@@ -10,7 +10,6 @@
         #pages-container { width: 100%; max-width: 800px; display: flex; flex-direction: column; align-items: center; padding-bottom: 70px; }
         .manga-page { width: 100%; height: auto; display: block; margin-bottom: 2px; }
         
-        /* Нижняя панель с кнопками */
         .nav-bar {
             position: fixed;
             bottom: 0;
@@ -37,9 +36,7 @@
 </head>
 <body>
 
-    <div id="pages-container">
-        <!-- Сюда подгружаются страницы манги -->
-    </div>
+    <div id="pages-container"></div>
 
     <div class="nav-bar">
         <button class="nav-btn" onclick="prevChapter()">⬅️ Пред. глава</button>
@@ -58,7 +55,6 @@
             const container = document.getElementById('pages-container');
             container.innerHTML = '';
 
-            // Примеры страниц (позже заменишь на реальные ссылки на картинки из базы/API)
             const pages = [
                 `https://via.placeholder.com/800x1200/111/fff?text=${mangaSlug}+Ch+${chapterNum}+Page+1`,
                 `https://via.placeholder.com/800x1200/222/fff?text=${mangaSlug}+Ch+${chapterNum}+Page+2`,
@@ -72,7 +68,7 @@
                 container.appendChild(img);
             });
             
-            window.scrollTo(0, 0); // Автопрокрутка на самый верх при переключении главы
+            window.scrollTo(0, 0);
         }
 
         function nextChapter() {
@@ -93,4 +89,3 @@
     </script>
 </body>
 </html>
-
