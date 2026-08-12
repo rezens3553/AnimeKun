@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnimeKun Reader</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { margin: 0; background: #000; color: #fff; font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; }
+        #pages-container { width: 100%; max-width: 800px; display: flex; flex-direction: column; align-items: center; padding-bottom: 70px; }
+        .manga-page { width: 100%; height: auto; display: block; margin-bottom: 2px; }
+        
+        /* Нижняя панель с кнопками */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(15, 15, 15, 0.95);
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            box-sizing: border-box;
+            border-top: 1px solid #222;
+        }
+        .nav-btn {
+            background: #ff5252;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="pages-container">
+        <!-- Сюда подгружаются страницы манги -->
+    </div>
+
+    <div class="nav-bar">
+        <button class="nav-btn" onclick="prevChapter()">⬅️ Пред. глава</button>
+        <button class="nav-btn" onclick="nextChapter()">След. глава ➡️</button>
+    </div>
+
+    <script>
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        let manga = urlParams.get('manga') || 'berserk';
+        let chapter = parseInt(urlParams.get('ch') || '1');
+
+        function loadChapter(mangaSlug, chapterNum) {
+            const container = document.getElementById('pages-container');
+            container.innerHTML = '';
+
+            // Примеры страниц (позже заменишь на реальные ссылки на картинки из базы/API)
+            const pages = [
+                `https://via.placeholder.com/800x1200/111/fff?text=${mangaSlug}+Ch+${chapterNum}+Page+1`,
+                `https://via.placeholder.com/800x1200/222/fff?text=${mangaSlug}+Ch+${chapterNum}+Page+2`,
+                `https://via.placeholder.com/800x1200/333/fff?text=${mangaSlug}+Ch+${chapterNum}+Page+3`
+            ];
+
+            pages.forEach(url => {
+                const img = document.createElement('img');
+                img.src = url;
+                img.className = 'manga-page';
+                container.appendChild(img);
+            });
+            
+            window.scrollTo(0, 0); // Автопрокрутка на самый верх при переключении главы
+        }
+
+        function nextChapter() {
+            chapter += 1;
+            loadChapter(manga, chapter);
+            history.replaceState(null, '', `?manga=${manga}&ch=${chapter}`);
+        }
+
+        function prevChapter() {
+            if (chapter > 1) {
+                chapter -= 1;
+                loadChapter(manga, chapter);
+                history.replaceState(null, '', `?manga=${manga}&ch=${chapter}`);
+            }
+        }
+
+        loadChapter(manga, chapter);
+    </script>
+</body>
+</html>
+
